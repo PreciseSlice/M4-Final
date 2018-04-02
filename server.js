@@ -11,29 +11,29 @@ app.use(express.static('public'));
 
 app.locals.title = 'Mod-4-final';
 
-app.get('/items', (request, responce) => {
+app.get('/items', (request, response) => {
   database('items')
     .select()
     .then(items => {
       if (items.length) {
-        responce.status(200).json(items);
+        response.status(200).json(items);
       } else {
-        responce.status(404).json({
+        response.status(404).json({
           error: 'item not found'
         });
       }
     })
     .catch(error => {
-      responce.status(500).json({ error });
+      response.status(500).json({ error });
     });
 });
 
-app.post('/items', (request, responce) => {
+app.post('/items', (request, response) => {
   const item = request.body;
 
   for (let requiredParameter of ['name', 'packed']) {
     if (!item[requiredParameter]) {
-      return responce.status(422).send({
+      return response.status(422).send({
         error: `you are missing ${requiredParameter} property`
       });
     }
@@ -42,17 +42,61 @@ app.post('/items', (request, responce) => {
   database('items')
     .insert(item, 'id')
     .then(item => {
-      responce.status(201).json({ id: item[0] });
+      response.status(201).json({ id: item[0] });
     })
     .catch(error => {
-      responce.status(500).json({ error });
+      response.status(500).json({ error });
+    });
+});
+
+app.patch('/items/:id', (request, response) => {
+  const item = request.body;
+  const { name, packed } = request.body;
+
+  for (let requiredParameter of ['name', 'packed']) {
+    if (!item[requiredParameter]) {
+      return response.status(422).send({
+        error: `you are missing ${requiredParameter} property`
+      });
+    }
+  }
+
+  database('items')
+    .where('id', request.params.id)
+    .select()
+    .update({
+      name: name,
+      packed: packed
+    })
+    .then(item => {
+      response.status(201).json({ item });
+    })
+    .catch(error => {
+      response.status(500).json({ error });
+    });
+});
+
+app.delete('/items/:id', (request, response) => {
+  database('items')
+    .where('id', request.params.id)
+    .select()
+    .del()
+    .then(item => {
+      if (item) {
+        response.status(202).json(item);
+      } else {
+        return response.status(422).send({
+          error: 'No item ID provided'
+        });
+      }
+    })
+    .catch(error => {
+      response.status(500).json({ error });
     });
 });
 
 app.listen(app.get('port'), () => {
   console.log(`${app.locals.title} server is running on ${app.get('port')}.`);
 });
-
-
 
 module.exports = app;
