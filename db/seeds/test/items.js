@@ -6,19 +6,16 @@ exports.seed = (knex, Promise) => {
       .then( () => {
         return Promise.all([
           knex('items')
-            .insert(
+            .insert([
               {
                 name: 'first item',
                 packed: false
               },
-              'id'
-            )
-            .insert(
               {
                 name: 'second item',
                 packed: false
-              },
-              'id'
+              }
+            ]
             )
         ])
     })

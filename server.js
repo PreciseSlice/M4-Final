@@ -86,7 +86,7 @@ app.delete('/items/:id', (request, response) => {
         response.status(202).json(item);
       } else {
         return response.status(422).send({
-          error: 'No item ID provided'
+          error: 'Incorrect item ID provided'
         });
       }
     })

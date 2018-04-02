@@ -1,6 +1,11 @@
+const documentWindow = $(window);
 const item = $('#item');
 const mainForm = $('form');
 const cardContainer = $('#card-container');
+
+const getItems = () => {
+  // fetch items from backend and append to card container
+}
 
 const formSubmitHandler = event => {
   event.preventDefault();
@@ -9,9 +14,11 @@ const formSubmitHandler = event => {
 }
 
 const appendCard = () => {
+  // POST item to backend
+
   cardContainer.append(`
   <section class="card">
-    <div>
+    <div class="card-top">
       <h2>${item.val()}</h2>
       <button id="delete-btn">delete</button>
     </div>
@@ -23,9 +30,17 @@ const appendCard = () => {
   `);
 }
 
+documentWindow.on('load', getItems);
 mainForm.on('submit', event => formSubmitHandler(event));
 
-cardContainer.on('click', '#delete-btn', event => { 
+cardContainer.on('click', '#check-box-form', event => {
+  event.preventDefault();
+  // PATCH item on backend
+})
+
+cardContainer.on('click', '#delete-btn', event => {
+  // DELETE item from backend
+
   event.preventDefault();
   $(event.target).parent().parent().remove()
 });
