@@ -1,124 +1,130 @@
-const documentWindow = $(window);
-const item = $('#item');
-const mainForm = $('form');
-const cardContainer = $('#card-container');
+$('document').ready(() => {
+  const documentWindow = $(window);
+  const item = $('#item');
+  const mainForm = $('form');
+  const cardContainer = $('#card-container');
 
-const getFromServer = async url => {
-  try {
-    const initialFetch = await fetch(url);
+  const getFromServer = async url => {
+    try {
+      const initialFetch = await fetch(url);
 
-    return await initialFetch.json();
-  } catch (error) {
-    console.log(error);
-  }
-};
+      return await initialFetch.json();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-const postToApi = async (url, data) => {
-  try {
-    const initialFetch = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
-}
+  const postToApi = async (url, data) => {
+    try {
+      const initialFetch = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-const deleteFromApi = async url => {
-  try {
-    const initialFetch = await fetch(url, {
-      method: 'DELETE',
-    })
-  } catch (error) {
-    console.log(error);
-  }
-}
+      return await initialFetch.json();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-const patchApi = async (url, data) => {
-  try {
-    const initialFetch = await fetch(url, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
-} 
+  const deleteFromApi = async url => {
+    try {
+      const initialFetch = await fetch(url, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-const getItems = async () => {
-  // fetch items from backend and append to card container
-  const items = await getFromServer('/items')
+  const patchApi = async (url, data) => {
+    try {
+      const initialFetch = await fetch(url, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-  // look to packed value in data base 
-  // if true need to add checked to input
-
-  // need to grab the items from the backend and put them on the DOM
-
-  items.forEach(async storedItems => {
+  const renderCard = (id, name, check) => {
     cardContainer.append(`
-      <section class="card">
+      <article class="card" data-id="${id}" data-name="${name}">
         <div class="card-top">
-          <h2>${ name }</h2>
+          <h2>${name}</h2>
           <button id="delete-btn">delete</button>
         </div>
-        <form id="check-box-form" onsumbmit="checkBoxSubmit">
-          <input id="check-box" type="checkbox">
-          <label for="check-box">Packed</label>
+        <form id="check-box-form">
+          <input data-name="${name}" data-id="${id}" class="check-boxes" id="check-${id}" type="checkbox" ${check}>
+          <label for="check-${id}">Packed</label>
         </form>
-      </section>
+      </article>
     `);
-  })
-}
+  };
 
-const formSubmitHandler = event => {
-  event.preventDefault();
-  appendCard()
-  item.val('')
-}
+  const getItems = async () => {
+    const items = await getFromServer('/items');
 
-const appendCard = () => {
-  // POST item to backend
-  const name = item.val();
-  const packed = $('#check-box-form').checked
-  const data = {
-    name: name,
-    packed: packed
-  } 
-  postToApi('/items', data)
+    if (items) {
+      items.forEach(async item => {
+        const id = item.id;
+        const name = item.name;
+        const check = item.packed ? 'checked' : '';
 
-  cardContainer.append(`
-  <section class="card">
-    <div class="card-top">
-      <h2>${name}</h2>
-      <button id="delete-btn">delete</button>
-    </div>
-    <form id="check-box-form" onsumbmit="checkBoxSubmit">
-      <input id="check-box" type="checkbox">
-      <label for="check-box">Packed</label>
-    </form>
-  </section>
-  `);
-}
+        renderCard(id, name, check);
+      });
+    }
+  };
 
-documentWindow.on('load', getItems);
-mainForm.on('submit', event => formSubmitHandler(event));
+  const formSubmitHandler = event => {
+    event.preventDefault();
+    appendCard();
+    item.val('');
+  };
 
-cardContainer.on('click', '#check-box-form', event => {
-  event.preventDefault();
-  // PATCH item on backend
-})
+  const appendCard = async () => {
+    const name = item.val();
+    const data = {
+      name: name,
+      packed: false
+    };
 
-cardContainer.on('click', '#delete-btn', event => {
-  // DELETE item from backend
-  // need to grab id and assign below
-  //id = 
-  deleteFromApi(`/items/${id}`)
-  event.preventDefault();
-  $(event.target).parent().parent().remove()
+    const id = await postToApi('/items', data);
+
+    renderCard(id, name, false);
+  };
+
+  documentWindow.on('load', getItems);
+
+  mainForm.on('submit', event => formSubmitHandler(event));
+
+  cardContainer.on('click', '.check-boxes', event => {
+    const currentItem = $(event.target);
+    const checkedProperty = event.target.checked;
+
+    const data = {
+      name: currentItem[0].dataset.name,
+      packed: checkedProperty
+    };
+
+    patchApi(`/items/${currentItem[0].dataset.id}`, data);
+  });
+
+  cardContainer.on('click', '#delete-btn', event => {
+    event.preventDefault();
+    $('#delete-btn').attr('disabled', true);
+    const item = $(event.target)
+      .parent()
+      .parent();
+
+    item.remove();
+    deleteFromApi(`/items/${item[0].dataset.id}`);
+  });
 });
