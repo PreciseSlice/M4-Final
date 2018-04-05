@@ -76,8 +76,8 @@ describe('API routes', () => {
         })
         .then(response => {
           response.should.have.status(201);
-          response.body.should.be.a('object');
-          response.body.id.should.equal(3);
+          response.body.should.be.a('number');
+          response.body.should.equal(3);
         })
         .catch(err => {
           throw err;
@@ -94,7 +94,7 @@ describe('API routes', () => {
         .then(response => {
           response.should.have.status(422);
           response.body.should.have.property('error');
-          response.body.error.should.equal('you are missing packed property');
+          response.body.error.should.equal('You are missing a required property');
         });
     });
   });
@@ -126,7 +126,7 @@ describe('API routes', () => {
           response.should.have.status(422);
           response.body.should.have.property('error');
           response.body.error.should.equal(
-            'you are missing packed property'
+            'You are missing a required property'
           );
         });
     });
@@ -145,12 +145,12 @@ describe('API routes', () => {
         });
     });
 
-    it('should return 422 if item id does not exist', () => {
+    it('should return 404 if item id does not exist', () => {
       return chai
         .request(server)
         .delete('/items/16')
         .then(response => {
-          response.should.have.status(422);
+          response.should.have.status(404);
           response.body.should.have.property('error');
           response.body.error.should.equal('Incorrect item ID provided');
         });
