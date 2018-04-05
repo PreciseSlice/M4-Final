@@ -6,7 +6,9 @@ const configuration = require('./knexfile')[environment];
 const database = require('knex')(configuration);
 
 app.use(bodyParser.json());
+
 app.set('port', process.env.PORT || 3000);
+
 app.use(express.static('public'));
 
 app.locals.title = 'Mod-4-final';
@@ -31,49 +33,53 @@ app.get('/items', (request, response) => {
 app.post('/items', (request, response) => {
   const item = request.body;
 
-  for (let requiredParameter of ['name', 'packed']) {
-    if (!item[requiredParameter]) {
-      return response.status(422).send({
-        error: `you are missing ${requiredParameter} property`
-      });
-    }
-  }
+  let validate = ['name', 'packed'].every(prop => {
+    return request.body.hasOwnProperty(prop);
+  });
 
-  database('items')
-    .insert(item, 'id')
-    .then(item => {
-      response.status(201).json({ id: item[0] });
-    })
-    .catch(error => {
-      response.status(500).json({ error });
+  if (validate) {
+    database('items')
+      .insert(item, 'id')
+      .then(item => {
+        response.status(201).json(item[0]);
+      })
+      .catch(error => {
+        response.status(500).json({ error });
+      });
+  } else {
+    response.status(422).send({
+      error: 'You are missing a required property'
     });
+  }
 });
 
 app.patch('/items/:id', (request, response) => {
   const item = request.body;
   const { name, packed } = request.body;
 
-  for (let requiredParameter of ['name', 'packed']) {
-    if (!item[requiredParameter]) {
-      return response.status(422).send({
-        error: `you are missing ${requiredParameter} property`
-      });
-    }
-  }
+  let validate = ['name', 'packed'].every(prop => {
+    return request.body.hasOwnProperty(prop);
+  });
 
-  database('items')
-    .where('id', request.params.id)
-    .select()
-    .update({
-      name: name,
-      packed: packed
-    })
-    .then(item => {
-      response.status(201).json({ item });
-    })
-    .catch(error => {
-      response.status(500).json({ error });
+  if (validate) {
+    database('items')
+      .where('id', request.params.id)
+      .select()
+      .update({
+        name: name,
+        packed: packed
+      })
+      .then(item => {
+        response.status(201).json({ item });
+      })
+      .catch(error => {
+        response.status(500).json({ error });
+      });
+  } else {
+    response.status(422).send({
+      error: 'You are missing a required property'
     });
+  }
 });
 
 app.delete('/items/:id', (request, response) => {
@@ -85,7 +91,7 @@ app.delete('/items/:id', (request, response) => {
       if (item) {
         response.status(202).json(item);
       } else {
-        return response.status(422).send({
+        return response.status(404).send({
           error: 'Incorrect item ID provided'
         });
       }
